@@ -22,6 +22,12 @@ import Image from "next/image";
 import Link from "next/link";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+} from "firebase/auth";
+import { auth } from "@/firebase/client";
+import { signIn, signup } from "@/lib/actions/auth.action";
 
 const AuthForm = ({ type }: { type: FormType }) => {
   const router = useRouter();
@@ -40,11 +46,48 @@ const AuthForm = ({ type }: { type: FormType }) => {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
       if (type === "sign-up") {
-        // TODO: Implement sign-up logic here
+        const { name, email, password } = values;
+
+        const userCredential = await createUserWithEmailAndPassword(
+          auth,
+          email,
+          password
+        ); // TODO: Implement sign-up logic here
+
+        const result = await signup({
+          uid: userCredential.user.uid,
+          name: name!,
+          email,
+          password,
+        });
+
+        if (!result?.success) {
+          toast.error(result?.message || "Sign up failed. Please try again.");
+          return;
+        }
         console.log("Sign up values:", values);
-        toast.success("Account created successfully!");
+        toast.success("Account created successfully! Please login.");
         router.push("/sign-in");
       } else {
+        const { email, password } = values;
+
+        const userCredential = await signInWithEmailAndPassword(
+          auth,
+          email,
+          password
+        );
+
+        const idToken = await userCredential.user.getIdToken();
+
+        if (!idToken) {
+          toast.error("Failed to retrieve authentication token.");
+          return;
+        }
+
+        await signIn({
+          email,
+          idToken,
+        });
         // TODO: Implement sign-in logic here
         console.log("Sign in values:", values);
         toast.success("Signed in successfully!");
