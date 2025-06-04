@@ -109,3 +109,37 @@ export async function isAuthenticated() {
   const user = await getCurrentUser();
   return !!user;
 }
+
+export async function getInterviewsByUserID(
+  userId: string
+): Promise<Interview[] | null> {
+  const Interviews = await db
+    .collection("interviews")
+    .where("userId", "==", userId)
+    .orderBy("createdAt", "desc")
+    .get();
+
+  return Interviews.docs.map((doc) => ({
+    ...doc.data(),
+    id: doc.id,
+  })) as Interview[] | null;
+}
+
+export async function getLatestInterviews(
+  params: GetLatestInterviewsParams
+): Promise<Interview[] | null> {
+  const { userId, limit = 20 } = params;
+
+  const Interviews = await db
+    .collection("interviews")
+    .where("finalized", "==", true)
+    .where("userId", "!=", userId)
+    .orderBy("createdAt", "desc")
+    .limit(limit)
+    .get();
+
+  return Interviews.docs.map((doc) => ({
+    ...doc.data(),
+    id: doc.id,
+  })) as Interview[] | null;
+}
