@@ -20,7 +20,13 @@ interface SavedMessage {
   content: string;
 }
 
-const Agent = ({ userName, userId, type }: AgentProps) => {
+const Agent = ({
+  userName,
+  userId,
+  type,
+  interviewId,
+  questions,
+}: AgentProps) => {
   //console.log(userName, userId, type);
   const router = useRouter();
   const [callStatus, setCallStatus] = useState<CallStatus>(CallStatus.INACTIVE);
@@ -75,16 +81,35 @@ const Agent = ({ userName, userId, type }: AgentProps) => {
     };
   }, []);
 
+  const handleGenerateFeedback = async (messages: SavedMessage[]) => {
+    console.log("generate feedback here");
+    const { success, id } = {
+      success: true, // Simulating a successful response
+      id: "feedback-id-123", // Simulated feedback ID
+    };
+
+    //TODO: create a server action that generates feedback
+    if (success && id) {
+      console.log("Feedback created successfully with ID:", id);
+      router.push(`/interview/${interviewId}/feedback`);
+    } else {
+      console.log("Failed to create feedback. Please try again later.");
+      router.push("/");
+    }
+  };
+
   useEffect(() => {
     if (messages.length > 0) {
       setLastMessage(messages[messages.length - 1].content);
     }
 
     if (callStatus === CallStatus.FINISHED) {
-      if (type === "generate") {
-        router.push("/");
-      } else {
-        console.log("done");
+      if (callStatus === CallStatus.FINISHED) {
+        if (type === "generate") {
+          router.push("/");
+        } else {
+          handleGenerateFeedback(messages);
+        }
       }
     }
   }, [messages, callStatus, router, type, userId]);
@@ -93,21 +118,43 @@ const Agent = ({ userName, userId, type }: AgentProps) => {
     try {
       setCallStatus(CallStatus.CONNECTING);
 
-      const assistantOverrides = {
-        variableValues: {
-          username: userName,
-          userid: userId,
-        },
-      };
+      if (type === "generate") {
+        const assistantOverrides = {
+          variableValues: {
+            username: userName,
+            userid: userId,
+          },
+        };
 
-      const response = await vapi.start(
-        undefined,
-        assistantOverrides,
-        undefined,
-        "f5f4f614-8a25-4013-b68d-518b443f58b6"
-      );
+        await vapi.start(
+          undefined,
+          assistantOverrides,
+          undefined,
+          "f5f4f614-8a25-4013-b68d-518b443f58b6"
+        );
+      } else {
+        let formattedQuestions = "";
+        if (questions && questions.length > 0) {
+          formattedQuestions = questions
+            .map((q, index) => `${index + 1}. ${q}`)
+            .join("\n");
+        }
 
-      console.log("Call response:", response);
+        const overrides = {
+          variableValues: {
+            username: userName,
+            questions: formattedQuestions,
+          },
+        };
+
+        await vapi.start(
+          undefined,
+          overrides,
+          undefined,
+          "25f301cb-a040-4b88-be11-2bc4cf270900"
+        );
+      }
+
       console.log("Call started successfully");
       setCallStatus(CallStatus.ACTIVE);
     } catch (error) {

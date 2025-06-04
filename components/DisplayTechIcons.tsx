@@ -2,7 +2,9 @@ import { cn, getTechLogos } from "@/lib/utils";
 import Image from "next/image";
 import React from "react";
 
-const DisplayTechIcons = async ({ techstack }: TechIconProps) => {
+const DisplayTechIcons = async ({ techstack = [] }: TechIconProps) => {
+  if (!techstack || techstack.length === 0) return null;
+
   const techIcons = await getTechLogos(techstack);
   return (
     <div className="flex flex-row gap-2">
