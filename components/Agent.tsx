@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 
 import { cn } from "@/lib/utils";
 import { vapi } from "@/lib/vapi.sdk";
-import { generator } from "@/constants";
 //import { createFeedback } from "@/lib/actions/general.action";
 
 enum CallStatus {
@@ -91,36 +90,39 @@ const Agent = ({ userName, userId, type }: AgentProps) => {
   }, [messages, callStatus, router, type, userId]);
 
   const handleCall = async () => {
-    setCallStatus(CallStatus.CONNECTING);
+    try {
+      setCallStatus(CallStatus.CONNECTING);
 
-    const assistantOverrides = {
-      variableValues: {
-        username: userName,
-        userid: userId,
-      },
-    };
+      const assistantOverrides = {
+        variableValues: {
+          username: userName,
+          userid: userId,
+        },
+      };
 
-    vapi
-      .start(
+      const response = await vapi.start(
         undefined,
         assistantOverrides,
         undefined,
         "f5f4f614-8a25-4013-b68d-518b443f58b6"
-      )
-      .then((response) => {
-        console.log("Call response:", response);
-        console.log("Call started successfully");
-        setCallStatus(CallStatus.ACTIVE);
-      })
-      .catch((error) => {
-        console.error("Error starting call:", error);
-        setCallStatus(CallStatus.INACTIVE);
-      });
+      );
+
+      console.log("Call response:", response);
+      console.log("Call started successfully");
+      setCallStatus(CallStatus.ACTIVE);
+    } catch (error) {
+      console.error("Error starting call:", error);
+      setCallStatus(CallStatus.INACTIVE);
+    }
   };
 
   const handleDisconnect = () => {
-    setCallStatus(CallStatus.FINISHED);
-    vapi.stop();
+    try {
+      setCallStatus(CallStatus.FINISHED);
+      vapi.stop();
+    } catch (error) {
+      console.error("Error disconnecting:", error);
+    }
   };
 
   return (

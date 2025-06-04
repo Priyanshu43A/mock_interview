@@ -1,6 +1,18 @@
 // import { CreateAssistantDTO } from "@vapi-ai/web/dist/api";
 // import { z } from "zod";
 
+interface Interview {
+  id: string;
+  userId: string;
+  role: string;
+  type: string;
+  techstack: string[];
+  level: string;
+  questions: string[];
+  finalized: boolean;
+  createdAt: string;
+}
+
 export const mappings = {
   "react.js": "react",
   reactjs: "react",
@@ -136,7 +148,7 @@ export const mappings = {
 // Use official yet friendly language.
 // Keep responses concise and to the point (like in a real voice interview).
 // Avoid robotic phrasing—sound natural and conversational.
-// Answer the candidate’s questions professionally:
+// Answer the candidate's questions professionally:
 
 // If asked about the role, company, or expectations, provide a clear and relevant answer.
 // If unsure, redirect the candidate to HR for more details.
@@ -289,21 +301,21 @@ export const generator = {
             type: "string",
             title: "type",
             description:
-              "Determines which style of interview questions to generate: use “technical” for coding exercises, data structures & algorithms, and system-design; “behavioral” for situational, STAR-style soft-skills and culture-fit scenarios; or “balanced” to mix both technical and behavioral questions. It is required to answer.",
+              'Determines which style of interview questions to generate: use "technical" for coding exercises, data structures & algorithms, and system-design; "behavioral" for situational, STAR-style soft-skills and culture-fit scenarios; or "balanced" to mix both technical and behavioral questions. It is required to answer.',
           },
           {
             enum: ["entry", "mid", "senior"],
             type: "string",
             title: "level",
             description:
-              "Indicates the candidate’s professional experience tier to tailor question difficulty and context. Examples include entry-level for recent graduates or interns, mid-level for 2–5 years of experience, senior-level for 5+ years, lead or architect roles, and executive or managerial positions. It is required to answer",
+              "Indicates the candidate's professional experience tier to tailor question difficulty and context. Examples include entry-level for recent graduates or interns, mid-level for 2–5 years of experience, senior-level for 5+ years, lead or architect roles, and executive or managerial positions. It is required to answer",
           },
           {
             enum: [],
             type: "string",
             title: "techstack",
             description:
-              "A list of relevant technologies, frameworks, languages, and tools to target during interview prep—e.g., “React”, “Node.js”, “AWS”, “Python”, “Docker”. Use this to generate questions and scenarios specific to your desired tech stack. It is required to answer.",
+              'A list of relevant technologies, frameworks, languages, and tools to target during interview prep—e.g., "React", "Node.js", "AWS", "Python", "Docker". Use this to generate questions and scenarios specific to your desired tech stack. It is required to answer.',
           },
           {
             enum: [],
@@ -316,7 +328,7 @@ export const generator = {
       },
       messagePlan: {
         firstMessage:
-          "Great! I am Neha. let's get started. So please tell me the job role you wants to prepare for?",
+          "Great {{ username }} ! I am Neha. let's get started. So please tell me the job role you wants to prepare for?",
       },
     },
     {
@@ -329,7 +341,7 @@ export const generator = {
         },
       },
       tool: {
-        url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/vapi/generate`,
+        url: "https://mock-interview-seven-topaz.vercel.app/api/vapi/generate",
         body: {
           type: "object",
           required: ["role", "type", "level", "techstack", "amount", "userid"],
@@ -337,33 +349,35 @@ export const generator = {
             role: {
               type: "string",
               value: "{{role}}",
-              description: "",
+              description: "the job role you gathered from conversation.",
             },
             type: {
               enum: ["technical", "behavioural", "mixed"],
               type: "string",
               value: "{{type}}",
-              description: "",
+              description: "the interview type you gathered from conversation.",
             },
             level: {
               type: "string",
-              value: "{{ level }}",
-              description: "",
+              value: "{{level}}",
+              description:
+                "the job experience level you gathered from conversation.",
             },
             amount: {
               type: "string",
-              value: "{{ amount }}",
-              description: "",
+              value: "{{amount}}",
+              description:
+                "the number of questions you gathered from conversation.",
             },
             userid: {
               type: "string",
-              value: "{{ userid }}",
-              description: "",
+              value: "{{userid}}",
+              description: "this is the variable provided by user",
             },
             techstack: {
               type: "string",
-              value: "{{ techstack }}",
-              description: "",
+              value: "{{techstack}}",
+              description: "the job techstack you gathered from conversation.",
             },
           },
         },
@@ -380,10 +394,9 @@ export const generator = {
         },
         messages: [
           {
-            type: "request-start",
-            content:
-              "Just stay here, i am requesting to prepare your interview.",
-            blocking: false,
+            type: "request-failed",
+            content: "Your request has failed for some reason.",
+            endCallAfterSpokenEnabled: false,
           },
         ],
       },
@@ -398,7 +411,7 @@ export const generator = {
         },
       },
       prompt:
-        "Tell the api response and Give confirmation about interview generation move further and end the call.",
+        "Tell the api response and Give confirmation about interview generation and end the call",
       model: {
         model: "gpt-4o",
         provider: "openai",
@@ -446,7 +459,7 @@ export const generator = {
       condition: {
         type: "ai",
         prompt:
-          "if the user had provided all the necessary variables and information and said confirmed to move further.",
+          "if the user had provided all the necessary variables and information and said yes to move further.",
       },
     },
     {
@@ -462,7 +475,8 @@ export const generator = {
       to: "hangup_1748615223252",
       condition: {
         type: "ai",
-        prompt: "if the user responds",
+        prompt:
+          "if user responds or stay silent no matter , just end the call.",
       },
     },
   ],
