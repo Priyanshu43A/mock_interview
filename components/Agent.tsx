@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 
 import { cn } from "@/lib/utils";
 import { vapi } from "@/lib/vapi.sdk";
+import { createFeedback } from "@/lib/actions/general.action";
 //import { createFeedback } from "@/lib/actions/general.action";
 
 enum CallStatus {
@@ -81,14 +82,21 @@ const Agent = ({
     };
   }, []);
 
-  const handleGenerateFeedback = async (messages: SavedMessage[]) => {
-    console.log("generate feedback here");
-    const { success, id } = {
-      success: true, // Simulating a successful response
-      id: "feedback-id-123", // Simulated feedback ID
-    };
+  //console.log(interviewId, userId, type, messages);
 
-    //TODO: create a server action that generates feedback
+  const handleGenerateFeedback = async (messages: SavedMessage[]) => {
+    if (!interviewId && !userId) {
+      console.log("Missing required data");
+      router.push("/");
+      return;
+    }
+
+    const { success, id } = await createFeedback({
+      interviewId,
+      userId,
+      transcript: messages,
+    });
+
     if (success && id) {
       console.log("Feedback created successfully with ID:", id);
       router.push(`/interview/${interviewId}/feedback`);
